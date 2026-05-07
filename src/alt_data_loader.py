@@ -80,7 +80,7 @@ def get_train_transforms() -> A.Compose:
         A.Normalize(mean=(0.485, 0.456, 0.406),   # ImageNet stats
                     std=(0.229, 0.224, 0.225)),
         ToTensorV2(),
-    ], is_check_shapes=False)
+    ])
 
 #resizing, normalize of val and test dataset
 def get_val_transforms() -> A.Compose:
@@ -92,7 +92,7 @@ def get_val_transforms() -> A.Compose:
         A.Normalize(mean=(0.485, 0.456, 0.406),
                     std=(0.229, 0.224, 0.225)),
         ToTensorV2(),
-    ], is_check_shapes=False)
+    ])
 
 
 # ---------------------------------------------------------------------------
