@@ -1,4 +1,5 @@
 """
+STEP 1
 filter_datasets.py
 
 Filters tomato-related images from PlantSeg, PlantDoc, and PlantVillage into a unified folder structure and builds a master metadata CSV.
