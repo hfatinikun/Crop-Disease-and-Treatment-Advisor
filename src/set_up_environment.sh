@@ -25,12 +25,16 @@ python -m venv ${TOOLS}/envs/dl_project --system-site-packages
 source ${TOOLS}/envs/dl_project/bin/activate
 
 #only install missing packages
-pip install --no-cache-dir albumentations opencv-python
+pip install --no-cache-dir opencv-python
 
 pip install --no-cache-dir torchvision==0.11.0 --no-deps
 
 pip install --no-cache-dir scikit-learn
 
 pip install --no-cache-dir Pillow
-# #run training code
-# python train.py
+
+pip install --no-cache-dir "albumentations==1.3.1"
+
+pip install --no-cache-dir pandas
+
+
