@@ -16,13 +16,18 @@ Image size: 256x256 (safe for memory on HPC)
 Augmentation: applied to train split only, always to image+mask simultaneously
 """
 
+#imports
 import os
 from pathlib import Path
+
+#because using python 3.9
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
 from PIL import Image
 
+#using albumentations to resize image and mask the same way
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
@@ -33,7 +38,7 @@ from torch.utils.data import Dataset, DataLoader, ConcatDataset
 # Constants
 # ---------------------------------------------------------------------------
 
-DATA_ROOT  = Path("data/tomato")
+DATA_ROOT  = Path("./tomato")
 META_CSV   = DATA_ROOT / "metadata.csv"
 IMAGE_SIZE = 256   # resize both sides to this
 
@@ -41,10 +46,24 @@ IMAGE_SIZE = 256   # resize both sides to this
 # (handled in training loop, stored here for reference)
 PSEUDO_MASK_LOSS_WEIGHT = 0.5
 
+#remapping tomato disease indexing from original plant seg metadata.csv
+PLANTSEG_CLASS_MAP = {
+    0: 0,    # background
+    96: 1,   # bacterial leaf spot
+    97: 2,   # early blight
+    98: 3,   # late blight
+    99: 4,   # leaf mold
+    100: 5,  # mosaic virus
+    101: 6,  # septoria leaf spot
+    102: 7,  # yellow leaf curl virus
+}
+NUM_CLASSES = 8
+
 # ---------------------------------------------------------------------------
 # Augmentation pipelines
 # ---------------------------------------------------------------------------
 
+#resizing, flipping, rotation, elastic transform, normalize of train dataset
 def get_train_transforms() -> A.Compose:
     """
     Geometric augmentations for training.
@@ -63,7 +82,7 @@ def get_train_transforms() -> A.Compose:
         ToTensorV2(),
     ])
 
-
+#resizing, normalize of val and test dataset
 def get_val_transforms() -> A.Compose:
     """
     Validation/test transforms — resize and normalise only, no augmentation.
@@ -124,6 +143,13 @@ class PlantSegDataset(Dataset):
         mask_path = DATA_ROOT / row["mask_path"]
         mask = np.array(Image.open(mask_path).convert("L"))  # [H, W] uint8
 
+        # remap BEFORE transforms
+        remapped = np.zeros_like(mask)
+        for original, new in PLANTSEG_CLASS_MAP.items():
+            remapped[mask == original] = new
+        mask = remapped
+
+        #transforms
         if self.transform:
             augmented = self.transform(image=image, mask=mask)
             image = augmented["image"]   # FloatTensor [3, H, W]
@@ -149,14 +175,15 @@ class PseudoMaskDataset(Dataset):
     Each item returns:
         image   : FloatTensor [3, H, W]
         mask    : LongTensor  [H, W]
-        weight  : float                   PSEUDO_MASK_LOSS_WEIGHT (0.5)
+        weight  : float                   PSEUDO_MASK_LOSS_WEIGHT (0.5) not a 1 because its a generated mask
     """
 
     def __init__(
         self,
         split: str,
         sources: tuple[str, ...] = ("plantdoc", "plantvillage"),
-        pseudo_mask_dir: str | Path = "pseudo_masks",
+        #pseudo_mask_dir: str | Path = "pseudo_masks", <- will work if above python 3.10
+        pseudo_mask_dir: Optional[Path] = None,
         transform: A.Compose = None,
     ):
         """
@@ -170,6 +197,11 @@ class PseudoMaskDataset(Dataset):
             transform       : albumentations Compose pipeline
         """
         assert split in ("train", "val", "test"), f"Invalid split: {split}"
+
+        #handle None default from __init__ above
+        if pseudo_mask_dir is None:
+            pseudo_mask_dir = Path("pseudo_masks")
+        self.pseudo_mask_dir = DATA_ROOT / Path(pseudo_mask_dir)
 
         df = pd.read_csv(META_CSV)
         self.df = df[
@@ -233,7 +265,7 @@ class PseudoMaskDataset(Dataset):
 def get_stage1_loaders(
     batch_size: int = 8,
     num_workers: int = 2,
-) -> tuple[DataLoader, DataLoader]:
+) -> Tuple[DataLoader, DataLoader]:
     """
     Stage 1: train and val loaders using PlantSeg real masks only.
 
@@ -265,8 +297,9 @@ def get_stage1_loaders(
 def get_stage3_loaders(
     batch_size: int = 8,
     num_workers: int = 2,
-    pseudo_mask_dir: str | Path = "pseudo_masks",
-) -> tuple[DataLoader, DataLoader]:
+    #pseudo_mask_dir: str | Path = "pseudo_masks",
+    pseudo_mask_dir: Optional[Path] = None,
+) -> Tuple[DataLoader, DataLoader]:
     """
     Stage 3: train and val loaders combining PlantSeg real masks
     with PlantDoc + PlantVillage pseudo-masks.
@@ -327,4 +360,4 @@ if __name__ == "__main__":
     print(f"  mask batch  : {masks.shape}    dtype={masks.dtype}")
     print(f"  weights     : {weights}")
     print(f"  mask unique values: {masks.unique().tolist()}")
-    print("\n[✓] DataLoader OK")
+    print("DataLoader OK")
