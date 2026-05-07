@@ -23,6 +23,9 @@ from pathlib import Path
 # make sure this is at the top of data_loader.py
 from typing import Optional, Tuple
 
+#to assist with logging runs, checkpoints, etc
+from datetime import datetime
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -40,7 +43,8 @@ from alt_data_loader import get_stage1_loaders, NUM_CLASSES
 # Configuration
 # ---------------------------------------------------------------------------
 
-CHECKPOINT_DIR = Path("outputs/checkpoints")
+RUN_ID         = datetime.now().strftime("%Y%m%d_%H%M%S")
+CHECKPOINT_DIR = Path("outputs/checkpoints") / RUN_ID
 LOG_FILE       = CHECKPOINT_DIR / "training_log.csv"
 
 NUM_EPOCHS     = 50
@@ -49,6 +53,11 @@ LEARNING_RATE  = 0.001
 MOMENTUM       = 0.9
 WEIGHT_DECAY   = 0.0005
 EARLY_STOP_PATIENCE = 10   # stop if val mIoU doesn't improve for this many epochs
+
+CLASS_WEIGHTS = torch.tensor(
+    [0.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],  # low weight for background, equal for diseases
+    dtype=torch.float32
+)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -167,7 +176,7 @@ def compute_miou(preds: torch.Tensor, targets: torch.Tensor, num_classes: int) -
     preds   = preds.view(-1)
     targets = targets.view(-1)
 
-    for cls in range(num_classes):
+    for cls in range(1, num_classes): #start at 1 -> skip background=0
         pred_mask   = (preds == cls)
         target_mask = (targets == cls)
 
@@ -253,7 +262,8 @@ def main():
     print(f"\n[Model] UNet-ResNet50 | params: {sum(p.numel() for p in model.parameters()):,}")
 
     # --- Loss, optimiser, scheduler ---
-    criterion = nn.CrossEntropyLoss()
+    #criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss(weight=CLASS_WEIGHTS.to(DEVICE))
     optimizer = optim.SGD(
         model.parameters(),
         lr=LEARNING_RATE,
@@ -314,7 +324,7 @@ def main():
 
     # Save final model
     torch.save(model.state_dict(), CHECKPOINT_DIR / "last_model.pth")
-    print(f"\n[✓] Training complete. Best val mIoU: {best_val_miou:.4f}")
+    print(f"\nTraining complete. Best val mIoU: {best_val_miou:.4f}")
     print(f"    Checkpoints saved to: {CHECKPOINT_DIR}/")
 
 
