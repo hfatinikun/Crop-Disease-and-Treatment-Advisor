@@ -26,5 +26,18 @@ module load PyTorch/1.10.0-foss-2021a-CUDA-11.3.1
 #activate environment
 source ${ENVIRONMENT}
 
+echo "========================================"
+echo "Job ID     : $SLURM_JOB_ID"
+echo "Job Name   : $SLURM_JOB_NAME"
+echo "Node       : $SLURMD_NODENAME"
+echo "Start time : $(date)"
+echo "Working dir: $(pwd)"
+echo "========================================"
+
 #run training code
 python ${TRAIN_PY}
+
+echo "========================================"
+echo "End time   : $(date)"
+echo "Job $SLURM_JOB_ID finished"
+echo "========================================"
