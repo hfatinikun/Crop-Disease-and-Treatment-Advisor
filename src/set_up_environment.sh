@@ -30,5 +30,7 @@ pip install --no-cache-dir albumentations opencv-python
 pip install --no-cache-dir torchvision==0.11.0 --no-deps
 
 pip install --no-cache-dir scikit-learn
+
+pip install --no-cache-dir Pillow
 # #run training code
 # python train.py
