@@ -53,7 +53,9 @@ LEARNING_RATE  = 0.001
 MOMENTUM       = 0.9
 WEIGHT_DECAY   = 0.0005
 EARLY_STOP_PATIENCE = 10   # stop if val mIoU doesn't improve for this many epochs
+UNFREEZE_EPOCH = 10  # unfreeze encoder after this many epochs
 
+#weighted loss incorporated to handle class imbalanace -> background dominating training -> penalizes disease class errors more heavily
 CLASS_WEIGHTS = torch.tensor(
     [0.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],  # low weight for background, equal for diseases
     dtype=torch.float32
@@ -237,6 +239,18 @@ def validate(model, loader, criterion, device):
     n = len(loader)
     return total_loss / n, total_miou / n
 
+# --- Freeze encoder for first N epochs ---
+def freeze_encoder(model):
+    for name, param in model.named_parameters():
+        if name.startswith("encoder"):
+            param.requires_grad = False
+    print("[✓] Encoder frozen")
+
+def unfreeze_encoder(model):
+    for name, param in model.named_parameters():
+        if name.startswith("encoder"):
+            param.requires_grad = True
+    print("[✓] Encoder unfrozen")
 
 # ---------------------------------------------------------------------------
 # Main
@@ -260,6 +274,9 @@ def main():
     # --- Model ---
     model = UNetResNet50(num_classes=NUM_CLASSES, pretrained=True).to(DEVICE)
     print(f"\n[Model] UNet-ResNet50 | params: {sum(p.numel() for p in model.parameters()):,}")
+
+    #freeze model
+    freeze_encoder(model)
 
     # --- Loss, optimiser, scheduler ---
     #criterion = nn.CrossEntropyLoss()
@@ -285,6 +302,11 @@ def main():
     epochs_no_improve = 0
 
     for epoch in range(1, NUM_EPOCHS + 1):
+
+        # unfreeze encoder after UNFREEZE_EPOCH epochs
+        if epoch == UNFREEZE_EPOCH + 1:
+            unfreeze_encoder(model)  
+
         t0 = time.time()
 
         train_loss, train_miou = train_one_epoch(
