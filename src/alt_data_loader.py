@@ -80,7 +80,7 @@ def get_train_transforms() -> A.Compose:
         A.Normalize(mean=(0.485, 0.456, 0.406),   # ImageNet stats
                     std=(0.229, 0.224, 0.225)),
         ToTensorV2(),
-    ])
+    ], is_check_shapes=False)
 
 #resizing, normalize of val and test dataset
 def get_val_transforms() -> A.Compose:
@@ -92,7 +92,7 @@ def get_val_transforms() -> A.Compose:
         A.Normalize(mean=(0.485, 0.456, 0.406),
                     std=(0.229, 0.224, 0.225)),
         ToTensorV2(),
-    ])
+    ], is_check_shapes=False)
 
 
 # ---------------------------------------------------------------------------
@@ -137,11 +137,15 @@ class PlantSegDataset(Dataset):
 
         # Load image (RGB)
         img_path = DATA_ROOT / row["image_path"]
-        image = np.array(Image.open(img_path).convert("RGB"))
+        #image = np.array(Image.open(img_path).convert("RGB"))
 
         # Load mask (grayscale PNG → integer array)
         mask_path = DATA_ROOT / row["mask_path"]
-        mask = np.array(Image.open(mask_path).convert("L"))  # [H, W] uint8
+        #mask = np.array(Image.open(mask_path).convert("L"))  # [H, W] uint8
+
+        #explicit resizing
+        image = np.array(Image.open(img_path).convert("RGB").resize((IMAGE_SIZE, IMAGE_SIZE)))
+        mask  = np.array(Image.open(mask_path).convert("L").resize((IMAGE_SIZE, IMAGE_SIZE), Image.NEAREST))
 
         # remap BEFORE transforms
         remapped = np.zeros_like(mask)
