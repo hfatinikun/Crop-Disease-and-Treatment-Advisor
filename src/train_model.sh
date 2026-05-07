@@ -18,6 +18,9 @@ WORKDIR="/data/users/aikiror/deepLearning/project"
 TRAIN_PY=""
 ENVIRONMENT=""
 
+#load pytorch
+module load PyTorch/1.10.0-foss-2021a-CUDA-11.3.1
+
 #activate environment
 source activate ${ENVIRONMENT}
 
