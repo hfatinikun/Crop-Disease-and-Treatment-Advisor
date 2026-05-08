@@ -1,0 +1,78 @@
+What's been done:
+Infrastructure:
+[DONE] -> [aI]
+    venv environment set up on HPC cluster using module system -> set_up_environment.sh [aI]
+    SLURM job scripts for CPU and GPU partitions [aI]
+    Project directory structure established -> 1_run_filtering_datasets.sh; 1_filtering_datasets.py [aI]
+
+filter_datasets.py (Stage 0): -> can run on cpu 
+[DONE] -> [aI]
+    Filters tomato images from all three datasets
+    Copies into unified ./project/tomato/ structure
+    Builds metadata.csv with image path, source, disease class, split, mask path
+    PlantSeg: 534 images (460 train, 74 val) with real masks
+    PlantDoc: 746 images across train/val/test
+    PlantVillage: 16,011 images across train/val/test
+    All split according to PlantSeg split (train/val/test) -> (0.70, 0.10, 0.20); PlantSeg left with original split as has the annotations too 
+
+data_loader.py (Stage 0):-> utilized by itself, by train.py, by pseudo_mask_gen -> can run on cpu
+[DONE] -> [aI]
+    PlantSegDataset — loads real masks, applies class remapping (96-102 → 1-7), explicit resize to 256×256: 96-102 are indices of tomato disease in original PlantSeg's metadata.csv
+    PseudoMaskDataset — loads pseudo-masks with 0.5 loss weight
+    get_stage1_loaders() and get_stage3_loaders() factory functions
+    Albumentations augmentation pipeline (flips, rotations, elastic transforms) applied simultaneously to image and mask. Albumentations used to ensure transformations done on images also done on mask in the same way
+
+    Design choices made:
+        256×256 image size (chosen for memory safety on HPC)
+        Class remapping: background=0, diseases=1-7, NUM_CLASSES=8
+        Background excluded from mIoU calculation -> was causing a class imbalance and model was learning to predict the background instead of the diseased area
+        CLASS_WEIGHTS = [0.1, 1.0 x7] to handle class imbalance
+        Separate dataset objects for Stage 1 and Stage 3
+
+train.py (Stage 1) -> on gpu 
+[DONE] -> [aI]
+    UNet with pretrained ResNet50 encoder (transfer learning) -> UNet used as it is included in pytorch, a little easier than SegNeXt
+    SGD optimizer, lr=0.001, momentum=0.9, weight decay=0.0005; lr-> learning rate, dec by weight decay if no improvement for 10 epochs
+    ReduceLROnPlateau scheduler, early stopping at patience=10
+    Timestamped checkpoint directories for easy matching and retrieval
+    Stage 1 baseline: val mIoU = 0.1003
+    Attempted freezing and unfreezing - didnt yield a better val mIoU
+
+pseudo_mask_gen.py (Stage 2) 
+[DONE] -> [aI]
+    Loads best Stage 1 model
+    Runs inference on all PlantDoc and PlantVillage images -> infers pseudo mask based off of model trained in train.py
+    Confidence thresholding at 0.7 (low confidence pixels → 0)
+    Saves pseudo-masks as grayscale PNGs
+    Updates metadata.csv with pseudo-mask paths
+    Verified pseudo-masks look reasonable (disease classes 3-7 appearing, varied coverage)
+
+
+What's left:
+retrain.py (Stage 3)
+    Retrain UNet on combined PlantSeg real masks + pseudo-masks
+    Same architecture as Stage 1
+    Pseudo-mask samples weighted at 0.5 in loss
+    Evaluate on same PlantSeg test set
+    Compare Stage 3 mIoU vs Stage 1 baseline (0.1003)
+
+evaluate.py
+
+Final evaluation on PlantSeg test set
+Report mIoU and mAcc per class
+This is your key results table for the report
+
+Analysis and reporting:
+
+Plot training curves (loss and mIoU across epochs) for both Stage 1 and Stage 3
+Compare Stage 1 vs Stage 3 quantitatively
+Document the improvement (or lack thereof) from pseudo-mask incorporation
+
+Optional but recommended:
+Visual examples of pseudo-masks overlaid on original images
+Per-class breakdown of IoU improvement between stages
+
+Slides
+    Create - luca
+
+Report
