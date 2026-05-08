@@ -1,7 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=retrain
-#SBATCH --partition=pibu_el8
-#SBATCH --cpus-per-task=4
+#SBATCH --partition=pgpu
+#SBATCH --gpus=1
+#SBATCH --cpus-per-gpu=4
 #SBATCH --mem=32G 
 #SBATCH --time=6:00:00
 #SBATCH --output=/data/users/aikiror/deepLearning/project/logFiles/5_run_retrain/output_%J.o
