@@ -15,7 +15,7 @@
 #also changed cpus-per-gpu
 
 WORKDIR="/data/users/aikiror/deepLearning/project"
-TRAIN_PY="${WORKDIR}/src/train.py"
+TRAIN_PY="${WORKDIR}/src/train_3.py"
 ENVIRONMENT="${WORKDIR}/tools/envs/dl_project/bin/activate"
 
 cd ${WORKDIR}

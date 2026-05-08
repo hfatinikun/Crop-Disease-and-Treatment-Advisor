@@ -11,7 +11,7 @@
 
 #dir and paths
 WORKDIR="/data/users/aikiror/deepLearning/project"
-SCRIPT_PY="${WORKDIR}/src/filtering_datasets.py"
+SCRIPT_PY="${WORKDIR}/src/1_filtering_datasets.py"
 ENVIRONMENT="${WORKDIR}/tools/envs/dl_project/bin/activate"
 
 cd ${WORKDIR}
