@@ -6,4 +6,7 @@
 /logFiles/set_up_environment
 /tomato
 /tools
+/logFiles
+/outputs
+/src/__pycache__
 
