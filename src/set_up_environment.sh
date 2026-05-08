@@ -38,3 +38,5 @@ pip install --no-cache-dir "albumentations==1.3.1"
 pip install --no-cache-dir pandas
 
 pip install --no-cache-dir tqdm
+
+pip install --no-cache-dir "numpy==1.26.4"
