@@ -189,6 +189,8 @@ class PseudoMaskDataset(Dataset):
         #pseudo_mask_dir: str | Path = "pseudo_masks", <- will work if above python 3.10
         pseudo_mask_dir: Optional[Path] = None,
         transform: A.Compose = None,
+        filter_empty_diseased: bool = True,
+        filter_false_positives: bool = True,
     ):
         """
         Args:
@@ -215,7 +217,34 @@ class PseudoMaskDataset(Dataset):
 
         self.transform       = transform
         self.split           = split
-        self.pseudo_mask_dir = DATA_ROOT / pseudo_mask_dir
+        #self.pseudo_mask_dir = DATA_ROOT / pseudo_mask_dir
+
+        # --- Filtering ---
+        if filter_empty_diseased or filter_false_positives:
+            valid_indices = []
+            for idx, row in self.df.iterrows():
+                is_healthy = "healthy" in str(row["disease_class"]).lower()
+                fname      = Path(row["image_path"]).stem + ".png"
+                mask_path  = self.pseudo_mask_dir / row["source"] / row["split"] / fname
+
+                if not mask_path.exists():
+                    continue
+
+                mask    = np.array(Image.open(mask_path))
+                is_zero = mask.max() == 0
+
+                # exclude healthy images where model predicted disease
+                if filter_false_positives and is_healthy and not is_zero:
+                    continue
+
+                # exclude diseased images where model predicted nothing
+                if filter_empty_diseased and not is_healthy and is_zero:
+                    continue
+
+                valid_indices.append(idx)
+
+            self.df = self.df.loc[valid_indices].reset_index(drop=True)
+
 
         print(
             f"[PseudoMaskDataset] split={split}  "
