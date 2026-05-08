@@ -31,7 +31,7 @@ data_loader.py (Stage 0):-> utilized by itself, by train.py, by pseudo_mask_gen 
 
 train.py (Stage 1) -> on gpu 
 [DONE] -> [aI]
-    UNet with pretrained ResNet50 encoder (transfer learning) -> UNet used as it is included in pytorch, a little easier than SegNeXt
+    UNet with pretrained ResNet50 encoder (transfer learning) -> UNet used as it is included in pytorch, a little easier than SegNeXt; ResNet50 pretrained on images, knows edges, textures, etc. 
     SGD optimizer, lr=0.001, momentum=0.9, weight decay=0.0005; lr-> learning rate, dec by weight decay if no improvement for 10 epochs
     ReduceLROnPlateau scheduler, early stopping at patience=10
     Timestamped checkpoint directories for easy matching and retrieval
@@ -72,7 +72,12 @@ Optional but recommended:
 Visual examples of pseudo-masks overlaid on original images
 Per-class breakdown of IoU improvement between stages
 
+Severity & Region incorporation:
+
+Solution to disease:
+
+
 Slides
-    Create - luca
+    Created - luca
 
 Report
