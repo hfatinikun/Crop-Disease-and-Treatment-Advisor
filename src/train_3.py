@@ -44,7 +44,7 @@ from alt_data_loader_2 import get_stage1_loaders, NUM_CLASSES
 # ---------------------------------------------------------------------------
 
 RUN_ID         = datetime.now().strftime("%Y%m%d_%H%M%S")
-CHECKPOINT_DIR = Path("outputs/checkpoints") / RUN_ID
+CHECKPOINT_DIR = Path("outputs/checkpoints/train") / RUN_ID
 LOG_FILE       = CHECKPOINT_DIR / "training_log.csv"
 
 NUM_EPOCHS     = 50
