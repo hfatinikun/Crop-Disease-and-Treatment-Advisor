@@ -32,11 +32,11 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 sys.path.append(str(Path(__file__).parent))
-from alt_data_loader import (
+from alt_data_loader_2 import (
     DATA_ROOT, META_CSV, IMAGE_SIZE, NUM_CLASSES,
     get_stage3_loaders, PlantSegDataset, get_val_transforms,
 )
-from train import UNetResNet50, compute_miou
+from train_3 import UNetResNet50, compute_miou
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -46,7 +46,7 @@ from train import UNetResNet50, compute_miou
 STAGE1_CHECKPOINT = Path("./outputs/checkpoints/20260508_002604/best_model.pth")  # update to your run
 
 RUN_ID         = "stage3_" + datetime.now().strftime("%Y%m%d_%H%M%S")
-CHECKPOINT_DIR = Path("outputs/checkpoints/retrain") / RUN_ID
+CHECKPOINT_DIR = Path("./outputs/checkpoints/retrain") / RUN_ID
 LOG_FILE       = CHECKPOINT_DIR / "training_log.csv"
 
 NUM_EPOCHS          = 50
